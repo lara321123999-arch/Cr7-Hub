@@ -1,0 +1,503 @@
+-- âš½ CR7 HUB || Matheus 
+-- Todos os crÃ©ditos: Matheus
+---------------------------------------------------------
+-- ServiÃ§os BÃ¡sicos
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+-- VariÃ¡veis Globais
+local ReachDistance = 1
+local AutoBallEnabled = false
+local BodyVel = nil
+local Minimized = false
+
+---------------------------------------------------------
+-- TELA DE CARREGAMENTO ANIMADA (5-10s)
+---------------------------------------------------------
+local function CreateLoadingScreen()
+    local LoadingGui = Instance.new("ScreenGui")
+    LoadingGui.Name = "CR7_Loading"
+    LoadingGui.ResetOnSpawn = false
+    LoadingGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    LoadingGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+    local Background = Instance.new("Frame")
+    Background.Size = UDim2.new(1, 0, 1, 0)
+    Background.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+    Background.Parent = LoadingGui
+
+    local Gradient = Instance.new("UIGradient")
+    Gradient.Rotation = 45
+    Gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 35)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(45, 35, 25)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 35))
+    }
+    Gradient.Parent = Background
+
+    local TitleContainer = Instance.new("Frame")
+    TitleContainer.Size = UDim2.new(1, 0, 0, 100)
+    TitleContainer.Position = UDim2.new(0, 0, 0.35, -50)
+    TitleContainer.BackgroundTransparency = 1
+    TitleContainer.Parent = Background
+
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, 0, 0, 80)
+    Title.BackgroundTransparency = 1
+    Title.Text = "âš½ CR7 HUB"
+    Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+    Title.Font = Enum.Font.FredokaOne
+    Title.TextSize = 55
+    Title.TextTransparency = 1
+    Title.Parent = TitleContainer
+
+    local SubTitle = Instance.new("TextLabel")
+    SubTitle.Size = UDim2.new(1, 0, 0, 30)
+    SubTitle.Position = UDim2.new(0, 0, 0, 70)
+    SubTitle.BackgroundTransparency = 1
+    SubTitle.Text = "Carregando... by Matheus"
+    SubTitle.TextColor3 = Color3.fromRGB(200, 180, 80)
+    SubTitle.Font = Enum.Font.SourceSansItalic
+    SubTitle.TextSize = 18
+    SubTitle.TextTransparency = 1
+    SubTitle.Parent = TitleContainer
+
+    local BarContainer = Instance.new("Frame")
+    BarContainer.Size = UDim2.new(0, 320, 0, 20)
+    BarContainer.Position = UDim2.new(0.5, -160, 0.55, -10)
+    BarContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    BarContainer.BorderSizePixel = 0
+    BarContainer.Parent = Background
+    Instance.new("UICorner", BarContainer).CornerRadius = UDim.new(0, 10)
+
+    local BarFill = Instance.new("Frame")
+    BarFill.Size = UDim2.new(0, 0, 1, 0)
+    BarFill.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+    BarFill.Parent = BarContainer
+    Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 10)
+
+    local BarGradient = Instance.new("UIGradient")
+    BarGradient.Rotation = 0
+    BarGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 180, 0)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 220, 0)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 180, 0))
+    }
+    BarGradient.Parent = BarFill
+
+    local PercentText = Instance.new("TextLabel")
+    PercentText.Size = UDim2.new(0, 60, 0, 25)
+    PercentText.Position = UDim2.new(0.5, -30, 0.62, 0)
+    PercentText.BackgroundTransparency = 1
+    PercentText.Text = "0%"
+    PercentText.TextColor3 = Color3.fromRGB(255, 215, 0)
+    PercentText.Font = Enum.Font.GothamBold
+    PercentText.TextSize = 14
+    PercentText.Parent = Background
+
+    -- AnimaÃ§Ã£o de entrada
+    TweenService:Create(Title, TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+    TweenService:Create(SubTitle, TweenInfo.new(1.0, Enum.EasingStyle.Quad), {TextTransparency = 0}):Play()
+
+    -- AnimaÃ§Ã£o da barra (8 segundos)
+    task.spawn(function()
+        local duration = 8
+        local steps = 50
+        for i = 1, steps do
+            local progress = i / steps
+            BarFill.Size = UDim2.new(progress, 0, 1, 0)
+            PercentText.Text = tostring(math.floor(progress * 100)) .. "%"
+            task.wait(duration / steps)
+        end
+        BarFill.Size = UDim2.new(1, 0, 1, 0)
+        PercentText.Text = "100%"
+        task.wait(0.5)
+
+        -- Fade out
+        TweenService:Create(Background, TweenInfo.new(0.8, Enum.EasingStyle.Quad), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(Title, TweenInfo.new(0.6), {TextTransparency = 1}):Play()
+        TweenService:Create(SubTitle, TweenInfo.new(0.6), {TextTransparency = 1}):Play()
+        task.wait(0.9)
+        LoadingGui:Destroy()
+    end)
+
+    return LoadingGui
+end
+
+-- Inicia tela de carregamento
+CreateLoadingScreen()
+task.wait(9.5) -- Espera a animaÃ§Ã£o terminar
+
+---------------------------------------------------------
+-- INTERFACE PRINCIPAL (CR7 HUB || Matheus)
+---------------------------------------------------------
+local ParentGui = gethui and gethui() or LocalPlayer:WaitForChild("PlayerGui")
+
+if ParentGui:FindFirstChild("CR7MainGui") then
+   ParentGui.CR7MainGui:Destroy()
+end
+
+local MainGui = Instance.new("ScreenGui")
+MainGui.Name = "CR7MainGui"
+MainGui.ResetOnSpawn = false
+MainGui.Parent = ParentGui
+
+-- BOLINHA MINIMIZADA (invisÃ­vel no inÃ­cio)
+local MiniBola = Instance.new("TextButton")
+MiniBola.Size = UDim2.new(0, 50, 0, 50)
+MiniBola.Position = UDim2.new(0.02, 0, 0.02, 0)
+MiniBola.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+MiniBola.Text = "CR7"
+MiniBola.TextColor3 = Color3.fromRGB(0, 0, 0)
+MiniBola.Font = Enum.Font.GothamBold
+MiniBola.TextSize = 11
+MiniBola.Active = true
+MiniBola.Draggable = true
+MiniBola.Visible = false
+MiniBola.Parent = MainGui
+Instance.new("UICorner", MiniBola).CornerRadius = UDim.new(1, 0)
+
+local MiniStroke = Instance.new("UIStroke")
+MiniStroke.Color = Color3.fromRGB(255, 255, 255)
+MiniStroke.Thickness = 2
+MiniStroke.Parent = MiniBola
+
+-- JANELA PRINCIPAL
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 220, 0, 180)
+Frame.Position = UDim2.new(0.05, 0, 0.3, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = MainGui
+
+local FrameCorner = Instance.new("UICorner")
+FrameCorner.CornerRadius = UDim.new(0, 8)
+FrameCorner.Parent = Frame
+
+local FrameStroke = Instance.new("UIStroke")
+FrameStroke.Color = Color3.fromRGB(255, 215, 0)
+FrameStroke.Thickness = 2
+FrameStroke.Parent = Frame
+
+-- CABEÃ‡ALHO COM - e X
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 30)
+Header.BackgroundTransparency = 1
+Header.Parent = Frame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -60, 0, 30)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "âš½ CR7 HUB"
+Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+Title.Font = Enum.Font.FredokaOne
+Title.TextSize = 16
+Title.Parent = Header
+
+local Credit = Instance.new("TextLabel")
+Credit.Size = UDim2.new(1, 0, 0, 18)
+Credit.Position = UDim2.new(0, 0, 0, 28)
+Credit.BackgroundTransparency = 1
+Credit.Text = "by Matheus"
+Credit.TextColor3 = Color3.fromRGB(180, 180, 180)
+Credit.Font = Enum.Font.SourceSansItalic
+Credit.TextSize = 12
+Credit.Parent = Frame
+
+local BtnMinimize = Instance.new("TextButton")
+BtnMinimize.Size = UDim2.new(0, 25, 0, 25)
+BtnMinimize.Position = UDim2.new(1, -55, 0, 2)
+BtnMinimize.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+BtnMinimize.Text = "-"
+BtnMinimize.TextColor3 = Color3.fromRGB(255, 215, 0)
+BtnMinimize.Font = Enum.Font.GothamBold
+BtnMinimize.TextSize = 16
+BtnMinimize.Parent = Header
+Instance.new("UICorner", BtnMinimize).CornerRadius = UDim.new(0, 5)
+
+local BtnClose = Instance.new("TextButton")
+BtnClose.Size = UDim2.new(0, 25, 0, 25)
+BtnClose.Position = UDim2.new(1, -27, 0, 2)
+BtnClose.BackgroundColor3 = Color3.fromRGB(70, 20, 20)
+BtnClose.Text = "X"
+BtnClose.TextColor3 = Color3.fromRGB(255, 80, 80)
+BtnClose.Font = Enum.Font.GothamBold
+BtnClose.TextSize = 14
+BtnClose.Parent = Header
+Instance.new("UICorner", BtnClose).CornerRadius = UDim.new(0, 5)
+
+-- BOTÃƒO SEGUIR BOLA
+local FloatingBtn = Instance.new("TextButton")
+FloatingBtn.Size = UDim2.new(0, 180, 0, 45)
+FloatingBtn.Position = UDim2.new(0.5, -90, 0, 50)
+FloatingBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+FloatingBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
+FloatingBtn.Text = "SEGUIR BOLA:\nDESLIGADO"
+FloatingBtn.Font = Enum.Font.FredokaOne
+FloatingBtn.TextSize = 14
+FloatingBtn.Parent = Frame
+Instance.new("UICorner", FloatingBtn).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", FloatingBtn).Color = Color3.fromRGB(255, 215, 0)
+
+-- CONTROLE REACH
+local ReachLabel = Instance.new("TextLabel")
+ReachLabel.Size = UDim2.new(1, -20, 0, 20)
+ReachLabel.Position = UDim2.new(0, 10, 0, 105)
+ReachLabel.BackgroundTransparency = 1
+ReachLabel.Text = "Alcance Reach: 1 Studs"
+ReachLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+ReachLabel.Font = Enum.Font.SourceSansBold
+ReachLabel.TextSize = 14
+ReachLabel.Parent = Frame
+
+local PlusBtn = Instance.new("TextButton")
+PlusBtn.Size = UDim2.new(0, 85, 0, 30)
+PlusBtn.Position = UDim2.new(0, 15, 0, 135)
+PlusBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+PlusBtn.Text = "+ REACH"
+PlusBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
+PlusBtn.Font = Enum.Font.SourceSansBold
+PlusBtn.Parent = Frame
+Instance.new("UICorner", PlusBtn).CornerRadius = UDim.new(0, 5)
+
+local MinusBtn = Instance.new("TextButton")
+MinusBtn.Size = UDim2.new(0, 85, 0, 30)
+MinusBtn.Position = UDim2.new(0, 115, 0, 135)
+MinusBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MinusBtn.Text = "- REACH"
+MinusBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
+MinusBtn.Font = Enum.Font.SourceSansBold
+MinusBtn.Parent = Frame
+Instance.new("UICorner", MinusBtn).CornerRadius = UDim.new(0, 5)
+
+-- JANELA DE CONFIRMAÃ‡ÃƒO EXCLUIR
+local ConfirmGui = Instance.new("ScreenGui")
+ConfirmGui.Name = "CR7_Confirm"
+ConfirmGui.ResetOnSpawn = false
+ConfirmGui.Enabled = false
+ConfirmGui.Parent = ParentGui
+
+local ConfirmFrame = Instance.new("Frame")
+ConfirmFrame.Size = UDim2.new(0, 280, 0, 140)
+ConfirmFrame.Position = UDim2.new(0.5, -140, 0.5, -70)
+ConfirmFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+ConfirmFrame.BorderSizePixel = 0
+ConfirmFrame.Active = true
+ConfirmFrame.Draggable = true
+ConfirmFrame.Parent = ConfirmGui
+Instance.new("UICorner", ConfirmFrame).CornerRadius = UDim.new(0, 12)
+local ConfirmStroke = Instance.new("UIStroke")
+ConfirmStroke.Color = Color3.fromRGB(255, 215, 0)
+ConfirmStroke.Thickness = 2
+ConfirmStroke.Parent = ConfirmFrame
+
+local ConfirmTitle = Instance.new("TextLabel")
+ConfirmTitle.Size = UDim2.new(1, 0, 0, 40)
+ConfirmTitle.BackgroundTransparency = 1
+ConfirmTitle.Text = "âš ï¸ Tem certeza?"
+ConfirmTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+ConfirmTitle.Font = Enum.Font.GothamBold
+ConfirmTitle.TextSize = 18
+ConfirmTitle.Parent = ConfirmFrame
+
+local ConfirmText = Instance.new("TextLabel")
+ConfirmText.Size = UDim2.new(1, -20, 0, 30)
+ConfirmText.Position = UDim2.new(0, 10, 0, 45)
+ConfirmText.BackgroundTransparency = 1
+ConfirmText.Text = "Quer excluir o script?"
+ConfirmText.TextColor3 = Color3.fromRGB(220, 220, 220)
+ConfirmText.Font = Enum.Font.GothamMedium
+ConfirmText.TextSize = 14
+ConfirmText.Parent = ConfirmFrame
+
+local BtnSim = Instance.new("TextButton")
+BtnSim.Size = UDim2.new(0, 110, 0, 35)
+BtnSim.Position = UDim2.new(0, 20, 0, 90)
+BtnSim.BackgroundColor3 = Color3.fromRGB(30, 140, 60)
+BtnSim.Text = "âœ… Sim"
+BtnSim.TextColor3 = Color3.new(1,1,1)
+BtnSim.Font = Enum.Font.GothamBold
+BtnSim.Parent = ConfirmFrame
+Instance.new("UICorner", BtnSim).CornerRadius = UDim.new(0, 8)
+
+local BtnNao = Instance.new("TextButton")
+BtnNao.Size = UDim2.new(0, 110, 0, 35)
+BtnNao.Position = UDim2.new(1, -130, 0, 90)
+BtnNao.BackgroundColor3 = Color3.fromRGB(140, 30, 30)
+BtnNao.Text = "âŒ NÃ£o"
+BtnNao.TextColor3 = Color3.new(1,1,1)
+BtnNao.Font = Enum.Font.GothamBold
+BtnNao.Parent = ConfirmFrame
+Instance.new("UICorner", BtnNao).CornerRadius = UDim.new(0, 8)
+
+---------------------------------------------------------
+-- FUNÃ‡Ã•ES DE MINIMIZAR / RESTAURAR
+---------------------------------------------------------
+local function Minimizar()
+    Minimized = true
+    TweenService:Create(Frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {Transparency = 1}):Play()
+    Frame.Visible = false
+    MiniBola.Visible = true
+end
+
+local function Restaurar()
+    Minimized = false
+    MiniBola.Visible = false
+    Frame.Visible = true
+    TweenService:Create(Frame, TweenInfo.new(0.3), {Transparency = 0}):Play()
+end
+
+---------------------------------------------------------
+-- ATIVAÃ‡Ã•ES
+---------------------------------------------------------
+local function ToggleAutoBall()
+   AutoBallEnabled = not AutoBallEnabled
+   if AutoBallEnabled then
+      FloatingBtn.Text = "SEGUIR BOLA:\nLIGADO âœ…"
+      FloatingBtn.TextColor3 = Color3.fromRGB(50, 255, 50)
+   else
+      FloatingBtn.Text = "SEGUIR BOLA:\nDESLIGADO"
+      FloatingBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
+      if BodyVel then
+         BodyVel:Destroy()
+         BodyVel = nil
+      end
+   end
+end
+
+FloatingBtn.MouseButton1Click:Connect(ToggleAutoBall)
+
+-- BotÃ£o - Minimizar
+BtnMinimize.MouseButton1Click:Connect(Minimizar)
+
+-- Clicar na bolinha = Restaurar
+MiniBola.MouseButton1Click:Connect(Restaurar)
+
+-- BotÃ£o X = Confirmar exclusÃ£o
+BtnClose.MouseButton1Click:Connect(function()
+    ConfirmGui.Enabled = true
+    ConfirmFrame.BackgroundTransparency = 1
+    TweenService:Create(ConfirmFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back), {BackgroundTransparency = 0}):Play()
+end)
+
+-- BotÃ£o Sim = Excluir tudo
+BtnSim.MouseButton1Click:Connect(function()
+    MainGui:Destroy()
+    ConfirmGui:Destroy()
+    if BodyVel then BodyVel:Destroy() end
+end)
+
+-- BotÃ£o NÃ£o = Fechar aviso
+BtnNao.MouseButton1Click:Connect(function()
+    TweenService:Create(ConfirmFrame, TweenInfo.new(0.25), {BackgroundTransparency = 1}):Play()
+    task.wait(0.25)
+    ConfirmGui.Enabled = false
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+   if not gameProcessed and input.KeyCode == Enum.KeyCode.G and not Minimized then
+      ToggleAutoBall()
+   end
+end)
+
+PlusBtn.MouseButton1Click:Connect(function()
+   if ReachDistance < 12 then
+      ReachDistance = ReachDistance + 1
+      ReachLabel.Text = "Alcance Reach: " .. ReachDistance .. " Studs"
+   end
+end)
+
+MinusBtn.MouseButton1Click:Connect(function()
+   if ReachDistance > 1 then
+      ReachDistance = ReachDistance - 1
+      ReachLabel.Text = "Alcance Reach: " .. ReachDistance .. " Studs"
+   end
+end)
+
+-- FunÃ§Ã£o para rastrear a bola do mapa
+local function GetBall()
+   for _, obj in pairs(workspace:GetDescendants()) do
+      if obj:IsA("BasePart") then
+         local name = obj.Name
+         if name == "TPS" or name == "ESA" or name == "MRS" or name == "PRS" or name == "MPS" or name == "Ball" or name == "Football" or name == "Soccer Ball" then
+            return obj
+         end
+      end
+   end
+   return nil
+end
+
+---------------------------------------------------------
+-- LOOPS DE FUNCIONALIDADE
+---------------------------------------------------------
+
+-- Auto Follow (Seguir a bola sem travar)
+RunService.RenderStepped:Connect(function()
+   if AutoBallEnabled and not Minimized and LocalPlayer.Character then
+      local char = LocalPlayer.Character
+      local root = char:FindFirstChild("HumanoidRootPart")
+      local humanoid = char:FindFirstChildOfClass("Humanoid")
+      local ball = GetBall()
+
+      if root and humanoid and ball then
+         local targetPos = Vector3.new(ball.Position.X, root.Position.Y, ball.Position.Z)
+         local distance = (root.Position - targetPos).Magnitude
+
+         if distance > 2.2 then
+            if not BodyVel or BodyVel.Parent ~= root then
+               if BodyVel then BodyVel:Destroy() end
+               BodyVel = Instance.new("BodyVelocity")
+               BodyVel.MaxForce = Vector3.new(100000, 0, 100000)
+               BodyVel.Velocity = Vector3.zero
+               BodyVel.Parent = root
+            end
+
+            local direction = (targetPos - root.Position).Unit
+            root.CFrame = CFrame.lookAt(root.Position, targetPos)
+            
+            local speed = math.max(humanoid.WalkSpeed, 16)
+            BodyVel.Velocity = direction * speed
+         else
+            if BodyVel then
+               BodyVel:Destroy()
+               BodyVel = nil
+            end
+         end
+      end
+   else
+      if BodyVel then
+         BodyVel:Destroy()
+         BodyVel = nil
+      end
+   end
+end)
+
+-- REACH REAL (MÃ©todo Magnet/CFrame + Touch)
+RunService.Heartbeat:Connect(function()
+   if ReachDistance > 1 and not Minimized and LocalPlayer.Character then
+      local char = LocalPlayer.Character
+      local leg = char:FindFirstChild("Right Leg") or char:FindFirstChild("Right Lower Leg") or char:FindFirstChild("HumanoidRootPart")
+      local ball = GetBall()
+
+      if leg and ball then
+         local distance = (leg.Position - ball.Position).Magnitude
+         local maxReach = ReachDistance * 1.8
+
+         if distance <= maxReach and distance > 1.5 then
+            if firetouchinterest then
+               firetouchinterest(ball, leg, 0)
+               firetouchinterest(ball, leg, 1)
+            end
+            if sethiddenproperty then
+               sethiddenproperty(ball, "NetworkIsServerBounded", false)
+            end
+            ball.CFrame = leg.CFrame * CFrame.new(0, -1, -1)
+         end
+      end
+   end
+end)
